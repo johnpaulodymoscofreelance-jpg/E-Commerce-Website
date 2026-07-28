@@ -58,21 +58,51 @@ export const AIStylistDrawer: React.FC<AIStylistDrawerProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/stylist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: promptText,
-          history: messages
-        })
-      });
+      let data: any = null;
+      try {
+        const response = await fetch('/api/stylist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: promptText,
+            history: messages
+          })
+        });
 
-      const data = await response.json();
+        if (response.ok) {
+          data = await response.json();
+        }
+      } catch (netErr) {
+        console.warn('Backend Express server unavailable on static host, switching to client-side concierge', netErr);
+      }
+
+      if (!data || !data.reply) {
+        // High luxury fallback recommendation logic if API endpoint unavailable
+        const promptLower = promptText.toLowerCase();
+        const matched = products.filter(p => 
+          promptLower.includes(p.category.toLowerCase()) || 
+          p.name.toLowerCase().includes(promptLower) ||
+          p.subtitle.toLowerCase().includes(promptLower) ||
+          (promptLower.includes('gold') && p.name.toLowerCase().includes('gold')) ||
+          (promptLower.includes('dress') && p.category === 'Haute Couture') ||
+          (promptLower.includes('gown') && p.category === 'Haute Couture') ||
+          (promptLower.includes('bag') && p.category === 'Leather Goods') ||
+          (promptLower.includes('watch') && p.category === 'Timepieces') ||
+          (promptLower.includes('perfume') && p.category === 'Maison Fragrance') ||
+          (promptLower.includes('gift') && p.featured)
+        );
+        const recommended = (matched.length > 0 ? matched : products.slice(0, 3)).map(p => p.id);
+
+        data = {
+          reply: `It is my absolute pleasure to assist you at Aurelia Maison de Luxe. Based on your desire for "${promptText}", I have curated these exquisite creations crafted in our European ateliers. Each piece includes white-glove concierge packaging and complimentary express insured delivery.`,
+          recommendedProductIds: recommended
+        };
+      }
 
       const stylistMsg: StylistMessage = {
         id: `stylist-${Date.now()}`,
         sender: 'stylist',
-        text: data.reply || 'Allow me to present our finest creations for your consideration.',
+        text: data.reply,
         recommendedProductIds: data.recommendedProductIds || [],
         timestamp: 'Now'
       };
