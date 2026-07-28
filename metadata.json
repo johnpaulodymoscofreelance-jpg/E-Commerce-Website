@@ -1,0 +1,6 @@
+{
+  "name": "Aurelia Luxury",
+  "description": "Flagship luxury e-commerce store with high-fashion collections, fine jewelry, timepieces, 360 degree preview, interactive wishlist, slide-out cart, and AI personal stylist.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
